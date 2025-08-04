@@ -90,6 +90,6 @@ P.D: Si hay algo que no se entiende o quieren que explique más, ¡pregúntenme 
 - [Canvas API - MDN](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API) - Para la visualización de techos y paneles con Canvas HTML5.
 - [Bin Packing Problem - Wikipedia](https://en.wikipedia.org/wiki/Bin_packing_problem) - Base teórica para el algoritmo greedy de colocación de paneles rectangulares.
 - [A Simple Solution for Shape Packing in 2D - Gorillasun.de](https://www.gorillasun.de/blog/a-simple-solution-for-shape-packing-in-2d) - Para el algoritmo de colocación de paneles en techos triangulares y detección de colisiones.
-- [Binary Tree Bin Packing Algorithm - Jake Gordon](https://jakesgordon.com/writing/binary-tree-bin-packing-algorithm) - Para posibles mejoras en el algoritmo de packing.
+- [Binary Tree Bin Packing Algorithm - Jake Gordon](https://jakesgordon.com/writing/bin-packing/) - Para posibles mejoras en el algoritmo de packing.
 - [Express.js Documentation](https://expressjs.com/) - Para la configuración del backend con Node.js/Express.
 - [Event Handling - MDN](https://developer.mozilla.org/en-US/docs/Web/Events) - Para los event listeners en JavaScript usados en la interfaz.
