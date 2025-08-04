@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌞 Calculadora de Paneles Solares - Ruuf</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌞 ¿Cuántos paneles caben?</h1>
+            <p>Calculadora de paneles solares para techos</p>
+        </header>
+
+        <div class="calculator">
+            <div class="input-section">
+                <h2>📐 Dimensiones</h2>
+
+                <div class="roof-type">
+                    <label>Tipo de techo:</label>
+                    <select id="roofType">
+                        <option value="rectangular">Rectangular</option>
+                        <option value="triangular">Triangular (Bonus!)</option>
+                    </select>
+                </div>
+
+                <div class="inputs rectangular-inputs">
+                    <div class="input-group">
+                        <label>Techo:</label>
+                        <input type="number" id="roofX" placeholder="Ancho (x)" min="1" step="0.1">
+                        <span>×</span>
+                        <input type="number" id="roofY" placeholder="Alto (y)" min="1" step="0.1">
+                    </div>
+                </div>
+
+                <div class="inputs triangular-inputs" style="display: none;">
+                    <div class="input-group">
+                        <label>Triángulo:</label>
+                        <input type="number" id="triangleBase" placeholder="Base" min="1" step="0.1">
+                        <input type="number" id="triangleHeight" placeholder="Altura" min="1" step="0.1">
+                    </div>
+                </div>
+
+                <div class="inputs">
+                    <div class="input-group">
+                        <label>Panel:</label>
+                        <input type="number" id="panelA" placeholder="Ancho (a)" min="0.1" step="0.1">
+                        <span>×</span>
+                        <input type="number" id="panelB" placeholder="Alto (b)" min="0.1" step="0.1">
+                    </div>
+                </div>
+
+                <button id="calculateBtn">🔢 Calcular</button>
+            </div>
+
+            <div class="result-section">
+                <div id="result" class="result-hidden">
+                    <h3 id="resultTitle">📊 Resultado</h3>
+                    <div id="resultText"></div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="roofCanvas" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Hecho con ☕ por José Carter para Ruuf!!</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
