@@ -48,21 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const orientation1 = calculatePanelsInOrientation(roofX, roofY, panelA, panelB);
-        const orientation2 = calculatePanelsInOrientation(roofX, roofY, panelB, panelA);
-
-        let bestResult;
-        if (orientation1.totalPanels >= orientation2.totalPanels) {
-            bestResult = orientation1;
-            bestResult.panelWidth = panelA;
-            bestResult.panelHeight = panelB;
-            bestResult.orientation = 'original';
-        } else {
-            bestResult = orientation2;
-            bestResult.panelWidth = panelB;
-            bestResult.panelHeight = panelA;
-            bestResult.orientation = 'rotated';
-        }
+        const bestResult = calculateOptimalRectangularPacking(roofX, roofY, panelA, panelB);
 
         showResult(bestResult, roofX, roofY, panelA, panelB);
         drawRectangularRoof(roofX, roofY, bestResult);
@@ -80,6 +66,99 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    function calculateOptimalRectangularPacking(roofX, roofY, panelA, panelB) {
+        const orientation1 = calculatePanelsInOrientation(roofX, roofY, panelA, panelB);
+        const orientation2 = calculatePanelsInOrientation(roofX, roofY, panelB, panelA);
+
+        let bestSolution = orientation1.totalPanels >= orientation2.totalPanels ?
+            { ...orientation1, panelWidth: panelA, panelHeight: panelB, orientation: 'original', panels: [] } :
+            { ...orientation2, panelWidth: panelB, panelHeight: panelA, orientation: 'rotated', panels: [] };
+
+        const mixedSolution = calculateMixedOrientationPacking(roofX, roofY, panelA, panelB);
+
+        if (mixedSolution.totalPanels > bestSolution.totalPanels) {
+            bestSolution = mixedSolution;
+        }
+
+        return bestSolution;
+    }
+
+    function calculateMixedOrientationPacking(roofX, roofY, panelA, panelB) {
+        const maxBestSolutions = [];
+
+        maxBestSolutions.push(tryMixedPacking(roofX, roofY, panelA, panelB, true));
+        maxBestSolutions.push(tryMixedPacking(roofX, roofY, panelA, panelB, false));
+
+        return maxBestSolutions.reduce((best, current) =>
+            current.totalPanels > best.totalPanels ? current : best
+        );
+    }
+
+    function tryMixedPacking(roofX, roofY, panelA, panelB, preferOriginal) {
+        const panels = [];
+        const occupied = [];
+
+        for (let i = 0; i <= roofY; i++) {
+            occupied[i] = [];
+            for (let j = 0; j <= roofX; j++) {
+                occupied[i][j] = false;
+            }
+        }
+
+        function canPlace(x, y, w, h) {
+            if (x + w > roofX || y + h > roofY) return false;
+            for (let i = y; i < y + h; i++) {
+                for (let j = x; j < x + w; j++) {
+                    if (occupied[i][j]) return false;
+                }
+            }
+            return true;
+        }
+
+        function place(x, y, w, h, orientation) {
+            for (let i = y; i < y + h; i++) {
+                for (let j = x; j < x + w; j++) {
+                    occupied[i][j] = true;
+                }
+            }
+            panels.push({ x, y, width: w, height: h, orientation });
+        }
+
+        for (let y = 0; y <= roofY; y++) {
+            for (let x = 0; x <= roofX; x++) {
+                if (preferOriginal) {
+                    if (canPlace(x, y, panelA, panelB)) {
+                        place(x, y, panelA, panelB, 'original');
+                    } else if (canPlace(x, y, panelB, panelA)) {
+                        place(x, y, panelB, panelA, 'rotated');
+                    }
+                } else {
+                    if (canPlace(x, y, panelB, panelA)) {
+                        place(x, y, panelB, panelA, 'rotated');
+                    } else if (canPlace(x, y, panelA, panelB)) {
+                        place(x, y, panelA, panelB, 'original');
+                    }
+                }
+            }
+        }
+
+        const totalPanels = panels.length;
+        const originalCount = panels.filter(p => p.orientation === 'original').length;
+        const rotatedCount = panels.filter(p => p.orientation === 'rotated').length;
+
+        return {
+            totalPanels,
+            panels,
+            panelWidth: panelA,
+            panelHeight: panelB,
+            orientation: 'mixed',
+            originalCount,
+            rotatedCount,
+            panelsHorizontal: Math.floor(roofX / Math.min(panelA, panelB)),
+            panelsVertical: Math.floor(roofY / Math.min(panelA, panelB))
+        };
+    }
+
     function calculateTriangular() {
         const base = parseFloat(document.getElementById('triangleBase').value);
         const height = parseFloat(document.getElementById('triangleHeight').value);
@@ -91,21 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const orientation1 = calculatePanelsInTriangle(base, height, panelA, panelB);
-        const orientation2 = calculatePanelsInTriangle(base, height, panelB, panelA);
-
-        let bestResult;
-        if (orientation1.panels.length >= orientation2.panels.length) {
-            bestResult = orientation1;
-            bestResult.panelWidth = panelA;
-            bestResult.panelHeight = panelB;
-            bestResult.orientation = 'original';
-        } else {
-            bestResult = orientation2;
-            bestResult.panelWidth = panelB;
-            bestResult.panelHeight = panelA;
-            bestResult.orientation = 'rotated';
-        }
+        const bestResult = calculateOptimalTriangularPacking(base, height, panelA, panelB);
 
         showTriangularResult(bestResult, base, height, panelA, panelB);
         drawTriangularRoof(base, height, bestResult);
@@ -135,6 +200,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         return { panels };
+    }
+
+    function calculateOptimalTriangularPacking(base, height, panelA, panelB) {
+        const orientation1 = calculatePanelsInTriangle(base, height, panelA, panelB);
+        const orientation2 = calculatePanelsInTriangle(base, height, panelB, panelA);
+
+        let bestSolution = orientation1.panels.length >= orientation2.panels.length ?
+            { ...orientation1, panelWidth: panelA, panelHeight: panelB, orientation: 'original' } :
+            { ...orientation2, panelWidth: panelB, panelHeight: panelA, orientation: 'rotated' };
+
+        const mixedSolution = calculateMixedTriangularPacking(base, height, panelA, panelB);
+
+        if (mixedSolution.panels.length > bestSolution.panels.length) {
+            bestSolution = mixedSolution;
+        }
+
+        return bestSolution;
+    }
+
+    function calculateMixedTriangularPacking(base, height, panelA, panelB) {
+        const panels = [];
+        const step = 0.5;
+
+        for (let y = 0; y <= height; y += step) {
+            for (let x = 0; x <= base; x += step) {
+                let placed = false;
+
+                if (!placed && isRectangleInTriangle(x, y, panelA, panelB, base, height)) {
+                    let overlaps = false;
+                    for (let panel of panels) {
+                        if (rectanglesOverlap(x, y, panelA, panelB, panel.x, panel.y, panel.width, panel.height)) {
+                            overlaps = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlaps) {
+                        panels.push({ x, y, width: panelA, height: panelB, orientation: 'original' });
+                        placed = true;
+                    }
+                }
+
+                if (!placed && isRectangleInTriangle(x, y, panelB, panelA, base, height)) {
+                    let overlaps = false;
+                    for (let panel of panels) {
+                        if (rectanglesOverlap(x, y, panelB, panelA, panel.x, panel.y, panel.width, panel.height)) {
+                            overlaps = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlaps) {
+                        panels.push({ x, y, width: panelB, height: panelA, orientation: 'rotated' });
+                        placed = true;
+                    }
+                }
+            }
+        }
+
+        const originalCount = panels.filter(p => p.orientation === 'original').length;
+        const rotatedCount = panels.filter(p => p.orientation === 'rotated').length;
+
+        return {
+            panels,
+            panelWidth: panelA,
+            panelHeight: panelB,
+            orientation: 'mixed',
+            originalCount,
+            rotatedCount
+        };
     }
 
     function isRectangleInTriangle(x, y, w, h, base, triangleHeight) {
@@ -174,13 +309,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const orientationText = calculationResult.orientation === 'rotated' ?
-            ` (paneles rotados ${panelB}×${panelA})` :
-            ` (paneles ${panelA}×${panelB})`;
+        let orientationText;
+        if (calculationResult.orientation === 'mixed') {
+            orientationText = ` (${calculationResult.originalCount} paneles ${panelA}×${panelB} + ${calculationResult.rotatedCount} paneles ${panelB}×${panelA})`;
+        } else if (calculationResult.orientation === 'rotated') {
+            orientationText = ` (paneles rotados ${panelB}×${panelA})`;
+        } else {
+            orientationText = ` (paneles ${panelA}×${panelB})`;
+        }
+
+        const distributionText = calculationResult.orientation === 'mixed' ?
+            'Orientación mixta optimizada' :
+            `${calculationResult.panelsHorizontal} × ${calculationResult.panelsVertical}`;
 
         resultText.innerHTML = `
             <strong>🎉 ¡caben ${calculationResult.totalPanels} paneles!</strong><br>
-            Distribución: ${calculationResult.panelsHorizontal} × ${calculationResult.panelsVertical}${orientationText}<br>
+            Distribución: ${distributionText}${orientationText}<br>
             Techo: ${roofX}×${roofY} | Panel: ${panelA}×${panelB}
         `;
         result.classList.remove('result-hidden');
@@ -192,15 +336,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const orientationText = calculationResult.orientation === 'rotated' ?
-            ` (paneles rotados ${panelB}×${panelA})` :
-            ` (paneles ${panelA}×${panelB})`;
+        let orientationText;
+        if (calculationResult.orientation === 'mixed') {
+            orientationText = ` (${calculationResult.originalCount} paneles ${panelA}×${panelB} + ${calculationResult.rotatedCount} paneles ${panelB}×${panelA})`;
+        } else if (calculationResult.orientation === 'rotated') {
+            orientationText = ` (paneles rotados ${panelB}×${panelA})`;
+        } else {
+            orientationText = ` (paneles ${panelA}×${panelB})`;
+        }
 
         resultText.innerHTML = `
             <strong>🎉 ¡caben ${calculationResult.panels.length} paneles!</strong><br>
             En triángulo de base ${base} y altura ${height}${orientationText}<br>
             Panel: ${panelA}×${panelB}<br>
-            <em>💡 Algoritmo aproximado - podría haber más optimizaciones</em>
+            <em>💡 Algoritmo optimizado con orientaciones mixtas</em>
         `;
         result.classList.remove('result-hidden');
     }
@@ -220,20 +369,33 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineWidth = 3;
         ctx.strokeRect(startX, startY, roofX * scale, roofY * scale);
 
-        ctx.fillStyle = '#f39c12';
         ctx.strokeStyle = '#e67e22';
         ctx.lineWidth = 1;
 
-        const panelWidth = result.panelWidth * scale;
-        const panelHeight = result.panelHeight * scale;
+        if (result.orientation === 'mixed' && result.panels) {
+            for (let panel of result.panels) {
+                const x = startX + panel.x * scale;
+                const y = startY + panel.y * scale;
+                const w = panel.width * scale;
+                const h = panel.height * scale;
 
-        for (let i = 0; i < result.panelsHorizontal; i++) {
-            for (let j = 0; j < result.panelsVertical; j++) {
-                const x = startX + i * panelWidth;
-                const y = startY + j * panelHeight;
+                ctx.fillStyle = panel.orientation === 'original' ? '#f39c12' : '#3498db';
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+            }
+        } else {
+            ctx.fillStyle = '#f39c12';
+            const panelWidth = result.panelWidth * scale;
+            const panelHeight = result.panelHeight * scale;
 
-                ctx.fillRect(x, y, panelWidth, panelHeight);
-                ctx.strokeRect(x, y, panelWidth, panelHeight);
+            for (let i = 0; i < result.panelsHorizontal; i++) {
+                for (let j = 0; j < result.panelsVertical; j++) {
+                    const x = startX + i * panelWidth;
+                    const y = startY + j * panelHeight;
+
+                    ctx.fillRect(x, y, panelWidth, panelHeight);
+                    ctx.strokeRect(x, y, panelWidth, panelHeight);
+                }
             }
         }
 
@@ -260,19 +422,24 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.closePath();
         ctx.stroke();
 
-        ctx.fillStyle = '#f39c12';
         ctx.strokeStyle = '#e67e22';
         ctx.lineWidth = 1;
 
-        const panelWidth = result.panelWidth * scale;
-        const panelHeight = result.panelHeight * scale;
-
         for (let panel of result.panels) {
             const x = startX + panel.x * scale;
-            const y = startY + (height - panel.y - result.panelHeight) * scale;
+            const panelHeight = panel.height || result.panelHeight;
+            const panelWidth = panel.width || result.panelWidth;
+            const y = startY + (height - panel.y - panelHeight) * scale;
 
-            ctx.fillRect(x, y, panelWidth, panelHeight);
-            ctx.strokeRect(x, y, panelWidth, panelHeight);
+            if (result.orientation === 'mixed') {
+                ctx.fillStyle = panel.orientation === 'original' ? '#f39c12' : '#3498db';
+                ctx.fillRect(x, y, panelWidth * scale, panelHeight * scale);
+                ctx.strokeRect(x, y, panelWidth * scale, panelHeight * scale);
+            } else {
+                ctx.fillStyle = '#f39c12';
+                ctx.fillRect(x, y, result.panelWidth * scale, result.panelHeight * scale);
+                ctx.strokeRect(x, y, result.panelWidth * scale, result.panelHeight * scale);
+            }
         }
 
         ctx.fillStyle = '#2c3e50';
