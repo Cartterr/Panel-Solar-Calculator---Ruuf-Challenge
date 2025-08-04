@@ -9,7 +9,7 @@ Esta aplicación calcula cuántos paneles solares rectangulares caben en un tech
 ## 🚀 Tecnologías usadas
 
 * **Frontend** : HTML, CSS, JavaScript vanilla (mantuve las cosas simples)
-* **Backend** : Node.js con Express (lo que más suelo usar)
+* **Backend** : Node.js con Express (lo que más suelo usar en proyectos personales)
 * **Visualización** : Canvas HTML5 (primera vez usándolo, tuve que buscar en internet cómo usarlo bien!!)
 
 ## 🤔 Decisiones de diseño
